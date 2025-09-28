@@ -1,0 +1,11 @@
+dist/
+node_modules/
+package-lock.json
+notes
+accounts.dev.json
+accounts.main.json
+accounts.json
+config.json
+.DS_Store
+.playwright-chromium-installed
+sessions/
