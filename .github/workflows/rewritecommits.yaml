@@ -1,0 +1,28 @@
+name: Rewrite
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rewrite-author:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: .
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: .
+        run: |
+          sudo apt update
+          sudo apt install -y git-filter-repo
+
+      - name: .
+        run: |
+          git filter-repo \
+            --name-callback 'def name_callback(name): return "lorem ipsun"' \
+            --email-callback 'def email_callback(email): return "user@example.com"'
+
+      - name: .
+        run: git push origin --force
