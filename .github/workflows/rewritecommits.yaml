@@ -1,4 +1,4 @@
-name: Rewrite
+name: Rewrite Author
 
 on:
   workflow_dispatch:
@@ -8,21 +8,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: .
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: .
+      - name: Install git-filter-repo
         run: |
           sudo apt update
           sudo apt install -y git-filter-repo
 
-      - name: .
+      - name: Overwrite author and committer
         run: |
-          git filter-repo \
-            --name-callback 'def name_callback(name): return "lorem ipsun"' \
-            --email-callback 'def email_callback(email): return "user@example.com"'
+          git filter-repo --replace-author "lorem ipsun <user@example.com>"
 
-      - name: .
+      - name: Push changes
         run: git push origin --force
