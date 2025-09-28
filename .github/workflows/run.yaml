@@ -1,5 +1,5 @@
 # This workflow does software tests when something updates
-name: Run software tests with remote configs
+name: Run
 
 on:
   workflow_dispatch:
