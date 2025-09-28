@@ -24,7 +24,7 @@ jobs:
           curl "${{ secrets.API_URL }}/accounts?code=${{ secrets.API_SECRET }}" -o src/accounts.json
 
       - name: Chmod prepare
-        run: chmod -x prepare.sh
+        run: chmod +x prepare.sh
         
       - name: Chmod run
         run: chmod +x run.sh
