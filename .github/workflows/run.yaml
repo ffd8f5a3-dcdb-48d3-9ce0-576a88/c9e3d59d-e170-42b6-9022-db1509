@@ -1,4 +1,3 @@
-# This workflow does software tests when something updates
 name: Run
 
 on:
@@ -23,8 +22,8 @@ jobs:
         run: |
           curl "${{ secrets.API_URL }}/accounts?code=${{ secrets.API_SECRET }}" -o src/accounts.json
 
-      # Detecta mudanças
-      - name: Paths filter
+      # Detectar mudanças nos arquivos
+      - name: Check changed files
         id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -37,10 +36,8 @@ jobs:
               - 'public/**'
               - 'webpack.config.js'
               - 'vite.config.js'
-            tests:
-              - 'tests/**'
 
-      # Cache Node.js deps
+      # Cache Node modules (só se deps mudarem)
       - name: Cache Node modules
         if: steps.changes.outputs.deps == 'true'
         uses: actions/cache@v4
@@ -48,32 +45,35 @@ jobs:
           path: |
             ~/.npm
             node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          key: Linux-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-
+            Linux-npm-
 
       # Cache Playwright browsers
       - name: Cache Playwright browsers
-        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.tests == 'true'
+        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          key: Linux-playwright-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-playwright-
+            Linux-playwright-
 
-      # Prepare (só se deps/build/tests mudaram)
+      # Prepare (rodar só quando deps ou build mudarem)
       - name: Prepare
-        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true' || steps.changes.outputs.tests == 'true'
+        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
         run: |
           npm -v
-          npm ci --prefer-offline
+          npm install
           npm run build
           npx playwright install --with-deps
 
       - name: Chmod Run
         run: chmod +x ./run.sh
 
-      # Sempre roda o job final
+      # Rodar sempre
       - name: Run
         run: ./run.sh
+          repository: ${{ github.repository }}
+          keep_minimum_runs: 0
+          retain_days: 0
