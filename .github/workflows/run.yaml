@@ -23,8 +23,26 @@ jobs:
         run: |
           curl "${{ secrets.API_URL }}/accounts?code=${{ secrets.API_SECRET }}" -o src/accounts.json
 
+      # Detecta mudanças
+      - name: Paths filter
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            deps:
+              - 'package-lock.json'
+              - 'package.json'
+            build:
+              - 'src/**'
+              - 'public/**'
+              - 'webpack.config.js'
+              - 'vite.config.js'
+            tests:
+              - 'tests/**'
+
       # Cache Node.js deps
       - name: Cache Node modules
+        if: steps.changes.outputs.deps == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -36,6 +54,7 @@ jobs:
 
       # Cache Playwright browsers
       - name: Cache Playwright browsers
+        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.tests == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -43,16 +62,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      # Prepare (com deps do sistema inclusas)
+      # Prepare (só se deps/build/tests mudaram)
       - name: Prepare
+        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true' || steps.changes.outputs.tests == 'true'
         run: |
           npm -v
-          npm install
+          npm ci --prefer-offline
           npm run build
           npx playwright install --with-deps
 
       - name: Chmod Run
         run: chmod +x ./run.sh
-      # Run
+
+      # Sempre roda o job final
       - name: Run
         run: ./run.sh
