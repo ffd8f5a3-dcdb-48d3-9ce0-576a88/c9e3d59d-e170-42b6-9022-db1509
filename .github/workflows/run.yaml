@@ -23,23 +23,47 @@ jobs:
         run: |
           curl "${{ secrets.API_URL }}/accounts?code=${{ secrets.API_SECRET }}" -o src/accounts.json
 
-      - name: Chmod prepare
-        run: chmod +x prepare.sh
-        
-      - name: Chmod run
-        run: chmod +x run.sh
+      # Cache Node.js deps
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
+      # Cache Playwright browsers
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      # Install system deps for Playwright
+      - name: Install Playwright dependencies
+        uses: microsoft/playwright-github-action@v1
+
+      # Prepare
       - name: Prepare
-        run: ./prepare.sh
-      
+        run: |
+          npm -v
+          npm install
+          npm run build
+          npx playwright install
+
+      # Run
       - name: Run
         run: ./run.sh
 
   delete-old-runs:
     runs-on: ubuntu-latest
     permissions:
-        actions: write
-        contents: read
+      actions: write
+      contents: read
     steps:
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
