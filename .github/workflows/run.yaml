@@ -37,8 +37,9 @@ jobs:
               - 'webpack.config.js'
               - 'vite.config.js'
 
-      # Cache Node modules (só se deps mudarem)
+      # Cache Node modules
       - name: Cache Node modules
+        id: cache-node
         if: steps.changes.outputs.deps == 'true'
         uses: actions/cache@v4
         with:
@@ -48,10 +49,10 @@ jobs:
           key: Linux-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             Linux-npm-
-
+      
       # Cache Playwright browsers
       - name: Cache Playwright browsers
-        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
+        id: cache-playwright
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -59,25 +60,43 @@ jobs:
           restore-keys: |
             Linux-playwright-
 
+      # Prepare otimizado
       - name: Prepare
         if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
         run: |
-          npm -v
-      
-          # Instalar deps e Playwright em paralelo
-          npm install --prefer-offline --no-audit --progress=false &
-          PLAYWRIGHT_PID=$!
-          
-          npx playwright install --with-deps &
-          NPX_PID=$!
-      
-          wait $PLAYWRIGHT_PID
-      
-          # Rodar build só depois que npm install terminar
-          npm run build
-      
-          wait $NPX_PID
+          echo "Node version: $(npm -v)"
 
+          # Evitar triggers lentos como man-db
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            openjdk-11-jre-headless libnss3 libatk1.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libgbm1 libasound2 \
+            -o Dpkg::Options::="--no-triggers" &
+
+          # Rodar npm install só se cache não existe
+          if [ "${{ steps.cache-node.outputs.cache-hit }}" != "true" ]; then
+            echo "Running npm install..."
+            npm ci --prefer-offline --no-audit --progress=false &
+            NPM_PID=$!
+          fi
+
+          # Rodar playwright install só se cache não existe
+          if [ "${{ steps.cache-playwright.outputs.cache-hit }}" != "true" ]; then
+            echo "Installing Playwright browsers..."
+            npx playwright install --with-deps &
+            PLAYWRIGHT_PID=$!
+          fi
+
+          # Esperar npm install e playwright install terminarem
+          [ -n "$NPM_PID" ] && wait $NPM_PID
+          [ -n "$PLAYWRIGHT_PID" ] && wait $PLAYWRIGHT_PID
+
+          # Rodar build só se houver mudanças
+          if [ "${{ steps.changes.outputs.build }}" == "true" ]; then
+            echo "Running build..."
+            npm run build
+          fi
 
       - name: Chmod Run
         run: chmod +x ./run.sh
