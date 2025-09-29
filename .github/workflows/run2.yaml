@@ -114,7 +114,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add sessions/
+          git add dist/browser/sessions
           if ! git diff --cached --quiet; then
             git commit -m "Update sessions [skip ci]"
             git push origin HEAD:${{ github.ref_name }}
