@@ -1,3 +1,7 @@
+# This workflow tests if function is working at specific times
+# It imports config.json and accounts.json (made for test)
+# If playwright updates, it updates too to check if latest version is compatible with the automation.
+
 name: Run
 
 on:
