@@ -43,32 +43,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      # Install system deps for Playwright
-      - name: Install Playwright dependencies
-        uses: microsoft/playwright-github-action@v1
-
-      # Prepare
+      # Prepare (com deps do sistema inclusas)
       - name: Prepare
         run: |
           npm -v
           npm install
           npm run build
-          npx playwright install
+          npx playwright install --with-deps
 
       # Run
       - name: Run
         run: ./run.sh
-
-  delete-old-runs:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          keep_minimum_runs: 0
-          retain_days: 0
