@@ -59,14 +59,25 @@ jobs:
           restore-keys: |
             Linux-playwright-
 
-      # Prepare (rodar só quando deps ou build mudarem)
       - name: Prepare
         if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
         run: |
           npm -v
-          npm install
+      
+          # Instalar deps e Playwright em paralelo
+          npm install --prefer-offline --no-audit --progress=false &
+          PLAYWRIGHT_PID=$!
+          
+          npx playwright install --with-deps &
+          NPX_PID=$!
+      
+          wait $PLAYWRIGHT_PID
+      
+          # Rodar build só depois que npm install terminar
           npm run build
-          npx playwright install --with-deps
+      
+          wait $NPX_PID
+
 
       - name: Chmod Run
         run: chmod +x ./run.sh
