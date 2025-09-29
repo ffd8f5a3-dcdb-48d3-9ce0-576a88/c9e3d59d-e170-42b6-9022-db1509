@@ -8,4 +8,3 @@ accounts.json
 config.json
 .DS_Store
 .playwright-chromium-installed
-sessions/
