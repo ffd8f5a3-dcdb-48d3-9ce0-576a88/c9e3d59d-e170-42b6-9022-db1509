@@ -1,4 +1,4 @@
-name: Clean Contributors
+name: .
 
 on:
   workflow_dispatch:
