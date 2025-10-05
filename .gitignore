@@ -1,0 +1,10 @@
+node_modules/
+notes
+accounts.dev.json
+accounts.main.json
+accounts.json
+config.json
+.DS_Store
+.playwright-chromium-installed
+reports/
+.secrets
