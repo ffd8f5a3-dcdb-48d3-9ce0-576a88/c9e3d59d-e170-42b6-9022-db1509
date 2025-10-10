@@ -1,4 +1,4 @@
-name: Crongen1
+name: CrongenAll
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  randomize-cron:
+  randomize-crons:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,28 +18,29 @@ jobs:
         with:
           token: ${{ secrets.CRONGEN_TOKEN }}
 
-      - name: Generate random cron
-        id: cron
-        run: |
-          MIN=$((RANDOM % 60))
-          HOUR=$((RANDOM % 24))
-          NEW_CRON="$MIN $HOUR * * *"
-          echo "new_cron=$NEW_CRON" >> $GITHUB_OUTPUT
-          echo "Novo cron: $NEW_CRON"
-
-      - name: Update workflow file
-        run: |
-          FILE=".github/workflows/run.yaml"
-          NEW_CRON="${{ steps.cron.outputs.new_cron }}"
-          sed -i "s|- cron: \".*\"|- cron: \"$NEW_CRON\"|" "$FILE"
-
       - name: Configure Git identity
         run: |
           git config --global user.name "crongen-bot"
           git config --global user.email "crongen-bot@users.noreply.github.com"
 
-      - name: Commit updated cron
+      - name: Find all run*.yaml files
+        id: find-files
         run: |
-          git add .github/workflows/run.yaml
-          git commit -m "Update cron to random time [skip ci]" || echo "No changes to commit"
+          echo "files=$(find .github/workflows/ -name 'run*.yaml' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Randomize cron for each run*.yaml
+        run: |
+          echo "Arquivos encontrados: ${{ steps.find-files.outputs.files }}"
+          for file in ${{ steps.find-files.outputs.files }}; do
+            MIN=$((RANDOM % 60))
+            HOUR=$((RANDOM % 24))
+            NEW_CRON="$MIN $HOUR * * *"
+            echo "Atualizando $file → cron: $NEW_CRON"
+            sed -i "s|- cron: \".*\"|- cron: \"$NEW_CRON\"|" "$file"
+          done
+
+      - name: Commit and push updates
+        run: |
+          git add .github/workflows/run*.yaml
+          git commit -m "Update all run*.yaml crons [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${{ github.ref_name }}
