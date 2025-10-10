@@ -35,6 +35,6 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add .github/workflows/run.yml
+          git add .github/workflows/run.yaml
           git commit -m "Update cron to random time [skip ci]" || echo "No changes to commit"
           git push
