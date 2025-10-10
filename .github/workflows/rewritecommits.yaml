@@ -16,7 +16,7 @@ jobs:
 
       - name: Set author info
         run: |
-          NEW_NAME="."
+          NEW_NAME="a54e00c2-3fba-45dc-b190-57117bc6fe10"
           NEW_EMAIL="user@example.com"
 
           git filter-branch --env-filter "
