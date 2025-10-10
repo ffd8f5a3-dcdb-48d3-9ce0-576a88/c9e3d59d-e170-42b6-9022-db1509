@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   randomize-cron:
     runs-on: ubuntu-latest
