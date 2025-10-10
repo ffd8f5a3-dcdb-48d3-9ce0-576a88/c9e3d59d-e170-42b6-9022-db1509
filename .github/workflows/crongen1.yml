@@ -5,10 +5,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
-permissions:
-  contents: write
-  actions: write
-
 jobs:
   randomize-cron:
     runs-on: ubuntu-latest
@@ -35,10 +31,14 @@ jobs:
           sed -i "s|- cron: \".*\"|- cron: \"$NEW_CRON\"|" "$FILE"
 
       - name: Commit updated cron
+        env:
+          CRONGEN_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add .github/workflows/run.yaml
           git commit -m "Update cron to random time [skip ci]" || echo "No changes to commit"
-          git push
+          
+          # Autenticação via token personalizado (PAT)
+          git push "https://x-access-token:${CRONGEN_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref_name }}
