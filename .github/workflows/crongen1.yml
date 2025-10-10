@@ -24,7 +24,7 @@ jobs:
 
       - name: Update workflow file
         run: |
-          FILE=".github/workflows/run.yml"
+          FILE=".github/workflows/run.yaml"
           NEW_CRON="${{ steps.cron.outputs.new_cron }}"
           
           # Substitui qualquer linha que comece com '- cron:'
