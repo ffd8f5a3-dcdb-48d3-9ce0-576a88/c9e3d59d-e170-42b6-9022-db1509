@@ -36,10 +36,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit and push updated cron
+      - name: Commit updated cron
         env:
           CRONGEN_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
         run: |
           git add .github/workflows/run.yaml
           git commit -m "Update cron to random time [skip ci]" || echo "No changes to commit"
-          git push "https://x-access-token:${CRONGEN_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref_name }}
+
+          # 🔹 Reconfigura remote para usar CRONGEN_TOKEN
+          git remote set-url origin "https://x-access-token:${CRONGEN_TOKEN}@github.com/${{ github.repository }}.git"
+
+          git push origin HEAD:${{ github.ref_name }}
