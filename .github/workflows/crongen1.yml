@@ -5,9 +5,13 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: write
+
 jobs:
   randomize-cron:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -15,10 +19,9 @@ jobs:
       - name: Generate random cron
         id: cron
         run: |
-          # Gera hora aleatória entre 0–23 e minuto entre 0–59
+          MIN=$((RANDOM % 60))
           HOUR=$((RANDOM % 24))
-          MINUTE=$((RANDOM % 60))
-          NEW_CRON="$MINUTE $HOUR * * *"
+          NEW_CRON="$MIN $HOUR * * *"
           echo "new_cron=$NEW_CRON" >> $GITHUB_OUTPUT
           echo "Novo cron: $NEW_CRON"
 
@@ -26,17 +29,17 @@ jobs:
         run: |
           FILE=".github/workflows/run.yaml"
           NEW_CRON="${{ steps.cron.outputs.new_cron }}"
-          
-          # Substitui qualquer linha que comece com '- cron:'
           sed -i "s|- cron: \".*\"|- cron: \"$NEW_CRON\"|" "$FILE"
 
-      - name: Commit updated cron
-        env:
-          GITHUB_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
+      - name: Configure Git identity
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Commit and push updated cron
+        env:
+          CRONGEN_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
+        run: |
           git add .github/workflows/run.yaml
           git commit -m "Update cron to random time [skip ci]" || echo "No changes to commit"
-          
-          # Autenticação via token personalizado (PAT)
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref_name }}
+          git push "https://x-access-token:${CRONGEN_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref_name }}
