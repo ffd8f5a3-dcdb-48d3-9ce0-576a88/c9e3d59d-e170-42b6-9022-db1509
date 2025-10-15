@@ -1,0 +1,146 @@
+# This workflow tests if function is working at specific times
+# It imports config.json and accounts.json (made for test)
+# If playwright updates, it updates too to check if latest version is compatible with the automation.
+
+name: Third scenario
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 1 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Export config.json
+        run: |
+          curl "${{ secrets.API_URL }}/config?code=${{ secrets.API_SECRET }}" -o src/config.json
+
+      - name: Export accounts.json
+        run: |
+          curl "${{ secrets.API_URL }}/accounts3?code=${{ secrets.API_SECRET }}" -o src/accounts.json
+
+      # Detectar mudanças nos arquivos
+      - name: Check changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            deps:
+              - 'package-lock.json'
+              - 'package.json'
+            build:
+              - 'src/**'
+              - 'public/**'
+              - 'webpack.config.js'
+              - 'vite.config.js'
+
+      # Cache Node modules
+      - name: Cache Node modules
+        id: cache-node
+        if: steps.changes.outputs.deps == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: Linux-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            Linux-npm-
+      
+      # Cache Playwright browsers
+      - name: Cache Playwright browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: Linux-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            Linux-playwright-
+
+      # Prepare otimizado
+      - name: Prepare
+        if: steps.changes.outputs.deps == 'true' || steps.changes.outputs.build == 'true'
+        run: |
+          echo "Node version: $(npm -v)"
+
+          # Evitar triggers lentos como man-db
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            openjdk-11-jre-headless libnss3 libatk1.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libgbm1 libasound2 \
+            -o Dpkg::Options::="--no-triggers" &
+
+          # Rodar npm install só se cache não existe
+          if [ "${{ steps.cache-node.outputs.cache-hit }}" != "true" ]; then
+            echo "Running npm install..."
+            npm ci --prefer-offline --no-audit --progress=false &
+            NPM_PID=$!
+          fi
+
+          # Rodar playwright install só se cache não existe
+          if [ "${{ steps.cache-playwright.outputs.cache-hit }}" != "true" ]; then
+            echo "Installing Playwright browsers..."
+            npx playwright install --with-deps &
+            PLAYWRIGHT_PID=$!
+          fi
+
+          # Esperar npm install e playwright install terminarem
+          [ -n "$NPM_PID" ] && wait $NPM_PID
+          [ -n "$PLAYWRIGHT_PID" ] && wait $PLAYWRIGHT_PID
+
+          # Rodar build só se houver mudanças
+          if [ "${{ steps.changes.outputs.build }}" == "true" ]; then
+            echo "Running build..."
+            npm run build
+          fi
+
+      # Descriptografar sessões antigas, se existirem
+      - name: Decrypt sessions
+        run: |
+          if [ -f "dist/browser/sessions.zip" ]; then
+            echo "Decrypting previous sessions..."
+            mkdir -p dist/browser/
+            unzip -P "$ZIP_PASS" dist/browser/sessions.zip -d dist/browser/ >/dev/null 2>&1 || echo "No valid zip found"
+          fi
+        env:
+          ZIP_PASS: ${{ secrets.ZIP_PASS }}
+
+      # Permissão de execução
+      - name: Chmod Run
+        run: chmod +x ./run.sh
+
+      # Rodar sempre
+      - name: Run
+        run: ./run.sh
+
+      # Compactar e criptografar sessões antes do commit
+      - name: Encrypt sessions
+        run: |
+          if [ -d "dist/browser/sessions" ]; then
+            echo "Encrypting sessions..."
+            zip -r --password "$ZIP_PASS" dist/browser/sessions.zip dist/browser/sessions >/dev/null
+            rm -rf dist/browser/sessions
+          fi
+        env:
+          ZIP_PASS: ${{ secrets.ZIP_PASS }}
+
+      # Commit do arquivo criptografado
+      - name: Commit encrypted sessions
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add dist/browser/sessions.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Update encrypted sessions [skip ci]"
+            git push --force origin HEAD:${{ github.ref_name }}
+          else
+            echo "No changes in sessions.zip"
+          fi
