@@ -7,8 +7,8 @@ name: Run
 on:
   workflow_dispatch:
   schedule:
-    - cron: "54 11 * * *"
-    - cron: "22 19 * * *"
+    - cron: "43 20 * * *"
+    - cron: "43 20 * * *"
 
 jobs:
   build:
