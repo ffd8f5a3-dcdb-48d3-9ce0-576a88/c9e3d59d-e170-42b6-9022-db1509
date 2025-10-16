@@ -7,7 +7,7 @@ name: Third scenario
 on:
   workflow_dispatch:
   schedule:
-    - cron: "6 11 * * *"
+    - cron: "5 15 * * *"
     - cron: "6 11 * * *"
 
 jobs:
