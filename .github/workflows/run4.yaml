@@ -7,7 +7,7 @@ name: 4th scenario
 on:
   workflow_dispatch:
   schedule:
-    - cron: "13 6 * * *"
+    - cron: "52 9 * * *"
 
 jobs:
   build:
