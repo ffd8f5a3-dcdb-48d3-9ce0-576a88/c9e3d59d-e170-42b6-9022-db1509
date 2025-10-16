@@ -32,11 +32,20 @@ jobs:
         run: |
           echo "Arquivos encontrados: ${{ steps.find-files.outputs.files }}"
           for file in ${{ steps.find-files.outputs.files }}; do
-            MIN=$((RANDOM % 60))
-            HOUR=$((RANDOM % 24))
-            NEW_CRON="$MIN $HOUR * * *"
-            echo "Atualizando $file → cron: $NEW_CRON"
-            sed -i "s|- cron: \".*\"|- cron: \"$NEW_CRON\"|" "$file"
+            # Randomize two cron expressions
+            MIN1=$((RANDOM % 60))
+            HOUR1=$((RANDOM % 24))
+            CRON1="$MIN1 $HOUR1 * * *"
+
+            MIN2=$((RANDOM % 60))
+            HOUR2=$((RANDOM % 24))
+            CRON2="$MIN2 $HOUR2 * * *"
+
+            echo "Atualizando $file → cron1: $CRON1, cron2: $CRON2"
+
+            # Replace the first two cron expressions in the file
+            sed -i "0,/cron: \".*\"/s|cron: \".*\"|cron: \"$CRON1\"|" "$file"
+            sed -i "0,/cron: \".*\"/s|cron: \".*\"|cron: \"$CRON2\"|" "$file"
           done
 
       - name: Commit and push updates
