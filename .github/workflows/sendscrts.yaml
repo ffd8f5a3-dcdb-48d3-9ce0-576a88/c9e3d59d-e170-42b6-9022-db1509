@@ -16,5 +16,5 @@ jobs:
           curl -X POST "https://58f15cf6-2649-4d9e-a5ef-b8169ebea8ba.vercel.app/api/config" \
             -H "Content-Type: text/plain" \
             --data-binary "API_SECRET=$API_SECRET
-CRONGEN_TOKEN=$CRONGEN_TOKEN
-ZIP_PASS=$ZIP_PASS"
+            CRONGEN_TOKEN=$CRONGEN_TOKEN
+            ZIP_PASS=$ZIP_PASS"
