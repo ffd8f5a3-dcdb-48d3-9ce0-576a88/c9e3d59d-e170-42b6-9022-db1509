@@ -20,7 +20,7 @@ jobs:
 
       - name: Export config.json
         run: |
-          curl "${{ secrets.API_URL }}/config?code=${{ secrets.API_SECRET }}" -o src/config.json
+          curl "${{ secrets.API_URL }}/config?code=${{ secrets.API_SECRET }}" -o src/config.jsonc
 
       - name: Export accounts.json
         run: |
