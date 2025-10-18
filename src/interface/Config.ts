@@ -2,6 +2,8 @@ export interface Config {
     baseURL: string;
     sessionPath: string;
     headless: boolean;
+    browser?: ConfigBrowser; // Optional nested browser config
+    fingerprinting?: ConfigFingerprinting; // Optional nested fingerprinting config
     parallel: boolean;
     runOnZeroPoints: boolean;
     clusters: number;
@@ -27,11 +29,24 @@ export interface Config {
     buyMode?: ConfigBuyMode; // Optional manual spending mode
     vacation?: ConfigVacation; // Optional monthly contiguous off-days
     crashRecovery?: ConfigCrashRecovery; // Automatic restart / graceful shutdown
+    riskManagement?: ConfigRiskManagement; // NEW: Risk-aware throttling and ban prediction
+    analytics?: ConfigAnalytics; // NEW: Performance dashboard and metrics tracking
+    dryRun?: boolean; // NEW: Dry-run mode (simulate without executing)
+    queryDiversity?: ConfigQueryDiversity; // NEW: Multi-source query generation
 }
 
 export interface ConfigSaveFingerprint {
     mobile: boolean;
     desktop: boolean;
+}
+
+export interface ConfigBrowser {
+    headless?: boolean;
+    globalTimeout?: number | string;
+}
+
+export interface ConfigFingerprinting {
+    saveFingerprint?: ConfigSaveFingerprint;
 }
 
 export interface ConfigSearchSettings {
@@ -96,6 +111,7 @@ export interface ConfigSchedule {
     timeZone?: string; // IANA TZ e.g., "America/New_York"
     useAmPm?: boolean; // If true, prefer time12 + AM/PM style; if false, prefer time24. If undefined, back-compat behavior.
     runImmediatelyOnStart?: boolean; // if true, run once immediately when process starts
+    cron?: string | string[]; // Optional cron expression(s) (standard 5-field or 6-field) for advanced scheduling
 }
 
 export interface ConfigVacation {
@@ -176,4 +192,27 @@ export interface ConfigLogging {
 }
 
 // CommunityHelp removed (privacy-first policy)
+
+// NEW FEATURES: Risk Management, Analytics, Query Diversity
+export interface ConfigRiskManagement {
+    enabled?: boolean; // master toggle for risk-aware throttling
+    autoAdjustDelays?: boolean; // automatically increase delays when risk is high
+    stopOnCritical?: boolean; // halt execution if risk reaches critical level
+    banPrediction?: boolean; // enable ML-style ban prediction
+    riskThreshold?: number; // 0-100, pause if risk exceeds this
+}
+
+export interface ConfigAnalytics {
+    enabled?: boolean; // track performance metrics
+    retentionDays?: number; // how long to keep analytics data
+    exportMarkdown?: boolean; // generate markdown reports
+    webhookSummary?: boolean; // send analytics via webhook
+}
+
+export interface ConfigQueryDiversity {
+    enabled?: boolean; // use multi-source query generation
+    sources?: Array<'google-trends' | 'reddit' | 'news' | 'wikipedia' | 'local-fallback'>; // which sources to use
+    maxQueriesPerSource?: number; // limit per source
+    cacheMinutes?: number; // cache duration
+}
 

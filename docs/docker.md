@@ -1,85 +1,167 @@
 # 🐳 Docker Guide
 
-<div align="center">
-
-**⚡ Lightweight containerized deployment**  
-*Automated Microsoft Rewards with minimal Docker footprint*
-
-</div>
+**Run the script in a container**
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
-### **Prerequisites**
-- ✅ `src/accounts.json` configured with your Microsoft accounts
-- ✅ `src/config.json` exists (uses defaults if not customized)
-- ✅ Docker & Docker Compose installed
+### 1. Create Required Files
 
-### **Launch**
+Ensure you have:
+- `src/accounts.json` with your credentials
+- `src/config.jsonc` (uses defaults if missing)
+
+### 2. Start Container
+
 ```bash
-# Build and start the container
 docker compose up -d
-
-# Monitor the automation
-docker logs -f microsoft-rewards-script
-
-# Stop when needed
-docker compose down
 ```
 
-**That's it!** The container runs the built-in scheduler automatically.uide
+### 3. View Logs
 
-This project ships with a Docker setup tailored for headless runs. It uses Playwright’s Chromium Headless Shell to keep the image small.
+```bash
+docker logs -f microsoft-rewards-script
+```
 
-## Quick Start
-- Ensure you have `src/accounts.json` and `src/config.json` in the repo
-- Build and start:
-  - `docker compose up -d`
-- Follow logs:
-  - `docker logs -f microsoft-rewards-script`
-
-## Volumes & Files
-The compose file mounts:
-- `./src/accounts.json` → `/usr/src/microsoft-rewards-script/accounts.json` (read‑only)
-- `./src/config.json` → `/usr/src/microsoft-rewards-script/config.json` (read‑only)
-- `./sessions` → `/usr/src/microsoft-rewards-script/sessions` (persist login sessions)
-
-You can also use env overrides supported by the app loader:
-- `ACCOUNTS_FILE=/path/to/accounts.json`
-- `ACCOUNTS_JSON='[ {"email":"...","password":"..."} ]'`
-
-## Environment
-Useful variables:
-- `TZ` — container time zone (e.g., `Europe/Paris`)
-- `NODE_ENV=production`
-- `FORCE_HEADLESS=1` — ensures headless mode inside the container
-- Scheduler knobs (optional):
-  - `SCHEDULER_DAILY_JITTER_MINUTES_MIN` / `SCHEDULER_DAILY_JITTER_MINUTES_MAX`
-  - `SCHEDULER_PASS_TIMEOUT_MINUTES`
-  - `SCHEDULER_FORK_PER_PASS`
-
-## Headless Browsers
-The Docker image installs only Chromium Headless Shell via:
-- `npx playwright install --with-deps --only-shell`
-
-This dramatically reduces image size vs. installing all Playwright browsers.
-
-## One‑shot vs. Scheduler
-- Default command runs the built‑in scheduler: `npm run start:schedule`
-- For one‑shot run, override the command:
-  - `docker run --rm ... node ./dist/index.js`
-
-## Tips
-- If you see 2FA prompts, add your TOTP Base32 secret to `accounts.json` so the bot can auto‑fill codes.
-- Use a persistent `sessions` volume to avoid re‑logging every run.
-- For proxies per account, fill the `proxy` block in your `accounts.json` (see [Proxy](./proxy.md)).
+**That's it!** Script runs automatically.
 
 ---
 
-## 🔗 Related Guides
+## 🎯 What's Included
 
-- **[Getting Started](./getting-started.md)** — Initial setup before containerization
-- **[Accounts & 2FA](./accounts.md)** — Configure accounts for Docker
-- **[Scheduler](./schedule.md)** — Alternative to Docker cron automation
-- **[Proxy Configuration](./proxy.md)** — Network routing in containers
+The Docker setup:
+- ✅ **Chromium Headless Shell** — Lightweight browser
+- ✅ **Scheduler enabled** — Daily automation
+- ✅ **Volume mounts** — Persistent sessions
+- ✅ **Force headless** — Required for containers
+
+---
+
+## 📁 Mounted Volumes
+
+| Host Path | Container Path | Purpose |
+|-----------|----------------|---------|
+| `./src/accounts.json` | `/usr/src/.../accounts.json` | Account credentials (read-only) |
+| `./src/config.jsonc` | `/usr/src/.../config.json` | Configuration (read-only) |
+| `./sessions` | `/usr/src/.../sessions` | Cookies & fingerprints |
+
+---
+
+## 🌍 Environment Variables
+
+### Set Timezone
+
+```yaml
+services:
+  rewards:
+    environment:
+      TZ: Europe/Paris
+```
+
+### Use Inline JSON
+
+```bash
+docker run -e ACCOUNTS_JSON='{"accounts":[...]}' ...
+```
+
+### Custom Config Path
+
+```bash
+docker run -e ACCOUNTS_FILE=/custom/path/accounts.json ...
+```
+
+---
+
+## 🔧 Common Commands
+
+```bash
+# Start container
+docker compose up -d
+
+# View logs
+docker logs -f microsoft-rewards-script
+
+# Stop container
+docker compose down
+
+# Rebuild image
+docker compose build --no-cache
+
+# Restart container
+docker compose restart
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| **"accounts.json not found"** | Mount file in `docker-compose.yml` |
+| **"Browser launch failed"** | Ensure `FORCE_HEADLESS=1` is set |
+| **"Permission denied"** | Check file permissions (`chmod 644`) |
+| **Scheduler not running** | Verify `schedule.enabled: true` in config |
+
+### Debug Container
+
+```bash
+# Enter container shell
+docker exec -it microsoft-rewards-script /bin/bash
+
+# Check Node.js version
+docker exec -it microsoft-rewards-script node --version
+
+# View config
+docker exec -it microsoft-rewards-script cat config.json
+```
+
+---
+
+## 🎛️ Custom Configuration
+
+### Use Built-in Scheduler
+
+**Default** `docker-compose.yml`:
+```yaml
+services:
+  rewards:
+    build: .
+    command: ["npm", "run", "start:schedule"]
+```
+
+### Single Run (Manual)
+
+```yaml
+services:
+  rewards:
+    build: .
+    command: ["node", "./dist/index.js"]
+```
+
+### External Cron (Alternative)
+
+```yaml
+services:
+  rewards:
+    environment:
+      CRON_SCHEDULE: "0 7,16,20 * * *"
+      RUN_ON_START: "true"
+```
+
+---
+
+## 📚 Next Steps
+
+**Need 2FA?**  
+→ **[Accounts & TOTP Setup](./accounts.md)**
+
+**Want notifications?**  
+→ **[Discord Webhooks](./conclusionwebhook.md)**
+
+**Scheduler config?**  
+→ **[Scheduler Guide](./schedule.md)**
+
+---
+
+**[← Back to Hub](./index.md)** | **[Getting Started](./getting-started.md)**
