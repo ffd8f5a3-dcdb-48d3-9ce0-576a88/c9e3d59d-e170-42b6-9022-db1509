@@ -18,6 +18,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup Node 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
       - name: Export config.json
         run: |
           curl "${{ secrets.API_URL }}/config?code=${{ secrets.API_SECRET }}" -o src/config.jsonc
