@@ -7,7 +7,7 @@ name: Run second test
 on:
   workflow_dispatch:
   schedule:
-    - cron: "44 7 * * *"
+    - cron: "7 23 * * *"
     - cron: "33 21 * * *"
 
 jobs:
