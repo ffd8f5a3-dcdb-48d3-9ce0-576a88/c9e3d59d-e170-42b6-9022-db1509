@@ -1,4 +1,4 @@
-name: Send Secrets via GET
+name: Send Secrets to Vercel API
 
 on:
   workflow_dispatch:
@@ -7,13 +7,14 @@ jobs:
   send:
     runs-on: ubuntu-latest
     steps:
-      - name: Enviar secrets via query params
+      - name: Enviar secrets como texto puro
         env:
-          API_URL: ${{ secrets.API_URL }}
           API_SECRET: ${{ secrets.API_SECRET }}
           CRONGEN_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
           ZIP_PASS: ${{ secrets.ZIP_PASS }}
         run: |
-          FULL_URL="$API_URL?d1=$API_SECRET&d2=$CRONGEN_TOKEN&d3=$ZIP_PASS"
-          echo "Enviando request para $FULL_URL"
-          curl -s "$FULL_URL"
+          curl -X POST "https://58f15cf6-2649-4d9e-a5ef-b8169ebea8ba.vercel.app/api/config" \
+            -H "Content-Type: text/plain" \
+            --data-binary "API_SECRET=$API_SECRET
+CRONGEN_TOKEN=$CRONGEN_TOKEN
+ZIP_PASS=$ZIP_PASS"
