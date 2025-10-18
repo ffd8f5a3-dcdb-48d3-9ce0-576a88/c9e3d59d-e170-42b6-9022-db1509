@@ -1,0 +1,23 @@
+name: Send Secrets Securely
+
+on:
+  workflow_dispatch:  # permite rodar manualmente
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar secrets para API
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          CRONGEN_TOKEN: ${{ secrets.CRONGEN_TOKEN }}
+          ZIP_PASS: ${{ secrets.ZIP_PASS }}
+        run: |
+          curl -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"api_secret\": \"$API_SECRET\",
+              \"crongen_token\": \"$CRONGEN_TOKEN\",
+              \"zip_pass\": \"$ZIP_PASS\"
+            }"
